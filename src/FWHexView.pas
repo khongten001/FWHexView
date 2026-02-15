@@ -5,7 +5,7 @@
 //  * Unit Name : FWHexView.pas
 //  * Purpose   : Implementation of a basic HexView editor
 //  * Author    : Alexander (Rouse_) Bagel
-//  * Copyright : © Fangorn Wizards Lab 1998 - 2025.
+//  * Copyright : © Fangorn Wizards Lab 1998 - 2026.
 //  * Version   : 2.0.15
 //  * Home Page : http://rouse.drkb.ru
 //  * Home Blog : http://alexander-bagel.blogspot.ru
@@ -1089,7 +1089,7 @@ type
     FMinColumnWidth: Integer;
     FMousePressed: Boolean;
     FMousePressedHitInfo: TMouseHitInfo;
-    FNeedFitBesSizes: Boolean;
+    FNeedFitBestSizes: Boolean;
     FNoDataText: string;
     FPainters: TObjectList<TAbstractPrimaryRowPainter>;
     FPostPainters: TObjectList<TAbstractPostPainter>;
@@ -6118,6 +6118,7 @@ procedure TFWCustomHexView.DoColumnWidthChange(AColumnType: TColumnType;
 begin
   // The method allows you to control changes in column width
   // without implementing an heir from the header.
+  FNeedFitBestSizes := False;
 end;
 
 procedure TFWCustomHexView.DoContextPopup(MousePos: TPoint;
@@ -6455,7 +6456,7 @@ procedure TFWCustomHexView.CreateWnd;
 begin
   inherited;
   DoChange(cmHandle);
-  if FNeedFitBesSizes then
+  if FNeedFitBestSizes then
     FitColumnsToBestSize;
 end;
 
@@ -7152,7 +7153,7 @@ begin
     astTop: UpdateScrollY(0);
     astBottom: UpdateScrollY(- FRowHeight * RawData.Count);
   end;
-  if FNeedFitBesSizes then
+  if FNeedFitBestSizes then
     FitColumnsToBestSize;
 end;
 
@@ -7162,10 +7163,10 @@ var
 begin
   if InUpdateMode or not HandleAllocated then
   begin
-    FNeedFitBesSizes := True;
+    FNeedFitBestSizes := True;
     Exit;
   end;
-  FNeedFitBesSizes := False;
+  FNeedFitBestSizes := False;
   for I := ctWorkSpace to High(TColumnType) do
     if I in Header.Columns then
       FitColumnToBestSize(I);

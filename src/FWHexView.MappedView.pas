@@ -5,7 +5,7 @@
 //  * Unit Name : FWHexView.MappedView.pas
 //  * Purpose   : Implementation of advanced HexView editor with data map support
 //  * Author    : Alexander (Rouse_) Bagel
-//  * Copyright : © Fangorn Wizards Lab 1998 - 2025.
+//  * Copyright : © Fangorn Wizards Lab 1998 - 2026.
 //  * Version   : 2.0.15
 //  * Home Page : http://rouse.drkb.ru
 //  * Home Blog : http://alexander-bagel.blogspot.ru
@@ -4192,6 +4192,7 @@ procedure TCustomMappedHexView.DoColumnWidthChange(AColumnType: TColumnType;
 var
   AMinWidth: Integer;
 begin
+  inherited;
   if (AColumnType = ctAddress) and (RawData.MaxRegionLevel > 0) then
   begin
     AMinWidth := CalculateColumnBestSize(ctAddress);
