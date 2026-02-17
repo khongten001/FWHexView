@@ -649,8 +649,12 @@ begin
         Break;
     end
     else
-      if not IsInvisibleChar(TFcChar32(uString[I + 1])) then
+      if not AContext.VisibleGlyphsPresent and not IsInvisibleChar(TFcChar32(uString[I + 1])) then
+      begin
         AContext.VisibleGlyphsPresent := True;
+        if AContext.InvalidGlyphsPresent and (AContext.Font.ff_desc.Embolden = FcFalse) then
+          Break;
+      end;
     if AContext.Font.ff_desc.Embolden = FcTrue then
       glyphs^.x := glyphs^.x - BoldOffset * I;
     Inc(glyphs);
@@ -1419,7 +1423,6 @@ begin
             FcPatternGetInteger(FoundPattern, FC_SLANT, 0, @Slant);
             FcPatternGetInteger(FoundPattern, FC_WEIGHT, 0, @Weight);
             FcPatternGetInteger(FoundPattern, FC_WIDTH, 0, @Width);
-            FcPatternGetInteger(FoundPattern, FC_INDEX, 0, @FaceIndex);
             AFontFamily := nil;
             FcPatternGetString(FoundPattern, FC_FAMILY, 0, @AFontFamily);
             AFontStyle := nil;
@@ -1480,7 +1483,7 @@ var
   Pattern, MatchedPattern: PFcPattern;
   Script: TUnicodeScript;
   CharSet: PFcCharSet;
-  QueryWeight, QuerySlant, QueryWidth: Integer;
+  QueryWeight, QuerySlant, QueryWidth, FaceIndex: Integer;
   FcRes: TFcResult;
   FontFile: PFcChar8;
   QueryFontFace, QueryFontStyle, FontPath: string;
@@ -1488,6 +1491,7 @@ var
   AFamilyList: TListOfInteger;
 begin
   Result := False;
+  Script := usLatin;
   AFontFaceDescriptor := Default(TFontFaceDescriptor);
   AFontFaceDescriptor.PixelSize := 18.0;
   Config := FcConfigGetCurrent;
@@ -1538,35 +1542,8 @@ begin
           if AFontFaceDescriptor.Index < 0 then
             raise ECairoException.Create('Unknown font: ' + StrPas(FontFile));
 
-          // По всей видимости я не верно как-то указываю паттерн и на некоторых
-          // шрифтах (например 'Source Code Pro') не ищется Italic, хотя он явно
-          // присутствует в системе. Поэтом для Italic шрифтов требуется
-          // коррекция через ручной подбор
-
-          // Apparently, I am not specifying the pattern correctly, and Italic
-          // is not found in some fonts (for example, ‘Source Code Pro’),
-          // although it is clearly present in the system.
-          // Therefore, Italic fonts require correction through manual selection.
-
-          if QuerySlant <> FFontFaceList[AFontFaceDescriptor.Index].Slant then
-          begin
-            if FFontFaceFamily.TryGetValue(QueryFontFace, AFamilyList) then
-            begin
-              for I := 0 to AFamilyList.Count - 1 do
-              begin
-                with FFontFaceList[AFamilyList[I]] do
-                begin
-                  if QuerySlant <> Slant then Continue;
-                  if QueryWeight <> Weight then Continue;
-                  if QueryWidth <> Width then Continue;
-                  if not (Script in Scripts) then Continue;
-                  AFontFaceDescriptor.Index := AFamilyList[I];
-                  //AFontFaceDescriptor.Embolden := ???
-                  Break;
-                end;
-              end;
-            end;
-          end;
+          if FcPatternGetInteger(MatchedPattern, FC_INDEX, 0, @FaceIndex) = FcResultMatch then
+            FFontFaceList[AFontFaceDescriptor.Index].FaceIndex := FaceIndex;
 
         end;
       end;
